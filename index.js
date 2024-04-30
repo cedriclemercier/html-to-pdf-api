@@ -115,6 +115,6 @@ app.post('/make-pdf', async (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
+app.listen(process.env.PORT || port, () => {
   console.log(`Server is listening at http://localhost:${port}`);
 });
