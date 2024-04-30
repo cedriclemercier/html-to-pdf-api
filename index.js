@@ -6,7 +6,8 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const app = express();
-const port = 5555; // Change the port if needed
+require('dotenv').config()
+const port = process.env.PORT || 5555; // Change the port if needed
 
 // Middleware to enable CORS
 app.use(cors());
@@ -115,6 +116,6 @@ app.post('/make-pdf', async (req, res) => {
 });
 
 // Start the server
-app.listen(process.env.PORT || port, () => {
+app.listen(port, () => {
   console.log(`Server is listening at http://localhost:${port}`);
 });
