@@ -19,6 +19,30 @@ app.get('/', (req, res) => {
   res.status(200).send('API is working!')
 })
 
+// =========================== For logging ==================================
+// app.use((req, res, next) => {
+//   const logStream = fs.createWriteStream(path.join(__dirname, 'logs.log'), { flags: 'a' });
+//   const oldConsoleLog = console.log;
+//   console.log = function (message) {
+//     logStream.write(`${new Date().toISOString()} - ${message}\n`);
+//     oldConsoleLog.apply(console, arguments);
+//   };
+//   next();
+// });
+// app.get('/', (req, res) => {
+//   // Read the logs file and send each line as an array to the frontend
+//   fs.readFile(path.join(__dirname, 'logs.log'), 'utf-8', (err, data) => {
+//     if (err) {
+//       console.error('Error reading logs file:', err);
+//       res.status(500).send('Error reading logs file');
+//     } else {
+//       const logs = data.split('\n').filter(line => line.trim() !== '');
+//       res.status(200).json({ logs });
+//     }
+//   });
+// });
+// =========================== For logging ==================================
+
   // Endpoint to read test.pdf file and send it as a blob
 app.get('/test-pdf', (req, res) => {
     const filePath = path.join(__dirname, 'pdf-preview-2.pdf');
@@ -43,6 +67,7 @@ app.get('/test-pdf', (req, res) => {
     }
   });
 
+
 // Endpoint to handle FormData and generate PDF from HTML code
 app.post('/make-pdf', async (req, res) => {
   // Find the Blob data for "page.html"
@@ -50,7 +75,7 @@ app.post('/make-pdf', async (req, res) => {
 
   if (pageHtmlBlob) {
     try {
-      const browser = await puppeteer.launch({ headless: true });
+      const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], ignoreDefaultArgs: ['--disable-extensions'] });
       const page = await browser.newPage();
       
       let pageHtmlString = pageHtmlBlob.buffer.toString('utf-8');
@@ -97,14 +122,13 @@ app.post('/make-pdf', async (req, res) => {
       });
 
       // Save the PDF file (optional)
-      console.log(`Saving to files: output.html and output.pdf !`);
-      fs.writeFileSync('output.html', pageHtmlString);
-      fs.writeFileSync('output.pdf', pdfBuffer);
+      // console.log(`Saving to files: output.html and output.pdf !`);
+      // fs.writeFileSync('output.html', pageHtmlString);
+      // fs.writeFileSync('output.pdf', pdfBuffer);
 
       // Set the content type header to indicate that a PDF blob is being sent in the response
       res.set('Content-Type', 'application/pdf');
       console.log('All done!');
-      // Send the PDF buffer in the response
       res.send(pdfBuffer);
     } catch (error) {
       console.error('Error generating PDF:', error);
