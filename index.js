@@ -8,6 +8,7 @@ const path = require('path');
 const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 5555; // Change the port if needed
+const { EventEmitter } = require('events'); // Import EventEmitter
 
 // Middleware to enable CORS
 app.use(cors());
@@ -15,33 +16,37 @@ app.use(cors());
 // Middleware to parse FormData
 app.use(upload.any());
 
-app.get('/', (req, res) => {
-  res.status(200).send('API is working!')
-})
+// Create an EventEmitter instance
+const eventEmitter = new EventEmitter();
 
-// =========================== For logging ==================================
-// app.use((req, res, next) => {
-//   const logStream = fs.createWriteStream(path.join(__dirname, 'logs.log'), { flags: 'a' });
-//   const oldConsoleLog = console.log;
-//   console.log = function (message) {
-//     logStream.write(`${new Date().toISOString()} - ${message}\n`);
-//     oldConsoleLog.apply(console, arguments);
-//   };
-//   next();
-// });
-// app.get('/', (req, res) => {
-//   // Read the logs file and send each line as an array to the frontend
-//   fs.readFile(path.join(__dirname, 'logs.log'), 'utf-8', (err, data) => {
-//     if (err) {
-//       console.error('Error reading logs file:', err);
-//       res.status(500).send('Error reading logs file');
-//     } else {
-//       const logs = data.split('\n').filter(line => line.trim() !== '');
-//       res.status(200).json({ logs });
-//     }
-//   });
-// });
-// =========================== For logging ==================================
+// Endpoint to subscribe to logs via SSE
+app.get('/logs', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  
+  // Send new log messages as SSE
+  const listener = (message) => {
+    res.write(`${ message }\n\n`);
+  };
+  eventEmitter.on('log', listener);
+
+  // Remove the listener when the client closes the connection
+  req.on('close', () => {
+    eventEmitter.off('log', listener);
+  });
+});
+
+// Function to emit log messages
+function logToUI(message) {
+  const dateTime = new Date().toLocaleString(); // Get current date and time in a nicely formatted string
+  const logMessage = `[${dateTime}] ${message}`; // Prepend date and time to the log message
+  eventEmitter.emit('log', logMessage);
+}
+
+app.get('/', (req, res) => {
+  res.status(200).send('API is working! Go to /logs to view logs')
+})
 
   // Endpoint to read test.pdf file and send it as a blob
 app.get('/test-pdf', (req, res) => {
@@ -74,6 +79,7 @@ app.post('/make-pdf', async (req, res) => {
   const pageHtmlBlob = req.files.find(file => file.fieldname === 'page.html');
 
   if (pageHtmlBlob) {
+    logToUI(`Found page.html. Getting files...`);
     try {
       const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'], ignoreDefaultArgs: ['--disable-extensions'] });
       const page = await browser.newPage();
@@ -86,6 +92,7 @@ app.post('/make-pdf', async (req, res) => {
       for (const file of req.files) {
         if (file.fieldname.endsWith('.css')) {
           console.log(`File ${i}: ${file.fieldname}`);
+          logToUI(`Found: File ${i}: ${file.fieldname}`);
           i++;
           // Read CSS file content as string
           const cssContent = file.buffer.toString('utf-8');
@@ -97,6 +104,7 @@ app.post('/make-pdf', async (req, res) => {
       pageHtmlString = pageHtmlString.replace('{style2}', `<style>${cssCode}</style>`);
 
       // Take care of replacing images with base64
+      logToUI(`Replacing images...`);
       for (const file of req.files) {
         if (file.fieldname.endsWith('.jpg') || file.fieldname.endsWith('.png')) {
           // Read image file content as base64
@@ -128,9 +136,11 @@ app.post('/make-pdf', async (req, res) => {
 
       // Set the content type header to indicate that a PDF blob is being sent in the response
       res.set('Content-Type', 'application/pdf');
+      logToUI(`Done.`);
       console.log('All done!');
       res.send(pdfBuffer);
     } catch (error) {
+      logToUI(`Error generating PDF: ${error}`);
       console.error('Error generating PDF:', error);
       res.status(500).send('Error generating PDF');
     }
