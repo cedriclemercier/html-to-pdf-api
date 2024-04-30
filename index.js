@@ -14,6 +14,10 @@ app.use(cors());
 // Middleware to parse FormData
 app.use(upload.any());
 
+app.get('/', (req, res) => {
+  res.status(200).send('API is working!')
+})
+
   // Endpoint to read test.pdf file and send it as a blob
 app.get('/test-pdf', (req, res) => {
     const filePath = path.join(__dirname, 'pdf-preview-2.pdf');
