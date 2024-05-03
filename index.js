@@ -162,7 +162,7 @@ app.post('/make-pdf', async (req, res) => {
       }
 
       // Replace cover page image. TODO: All in one code with the lines above
-      pageHtmlString = replaceImagePlaceholder(pageHtmlString, imagesArray);
+      pageHtmlString = replaceImagePlaceholder(pageHtmlString, imagesArray, true);
       pageHtmlString = replaceImgToBase64(pageHtmlString, imagesArray, req.files)
 
       await page.setContent(pageHtmlString);
