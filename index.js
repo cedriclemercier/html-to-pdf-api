@@ -20,10 +20,15 @@ app.use(upload.any());
 const eventEmitter = new EventEmitter();
 
 // ================================================ helper functions =======================================================
-function getRandomImage(images) {
-  const filteredImages = images.filter(
+function getRandomImage(images, cover=false) {
+  let filteredImages = images.filter(
     (image) => !image.endsWith(".ttf") && !image.endsWith(".svg")
   );
+
+  if (cover) {
+    console.log('cover page, selecting only high res images');
+    filteredImages = filteredImages.filter(image => image.includes("highres"));
+  }
 
   let randomIndex = Math.floor(Math.random() * filteredImages.length);
   while (filteredImages[randomIndex].includes('bg') || filteredImages[randomIndex].includes('background') || filteredImages[randomIndex].includes('logo')) {
@@ -33,7 +38,7 @@ function getRandomImage(images) {
 
   return filteredImages[randomIndex];
 }
-function replaceImagePlaceholder(str, imageFiles) {
+function replaceImagePlaceholder(str, imageFiles, cover=false) {
   return str.replace(/\{image\}/g, function () {
     // Select a random image from imageFiles
     return getRandomImage(imageFiles);
