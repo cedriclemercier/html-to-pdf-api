@@ -57,7 +57,7 @@ function replaceImagePlaceholder(str, imageFiles, cover=false) {
 function replaceImgToBase64(htmlString, imageFiles, files) {
   let content = htmlString;
   for (const file of files) {
-    if (file.fieldname.endsWith('.jpg') || file.fieldname.endsWith('.png')) {
+    if (file.fieldname.endsWith('.jpg') || file.fieldname.endsWith('.png') || file.fieldname.endsWith('.svg')) {
       const imageBase64 = `data:image/${path.extname(file.fieldname).substring(1)};base64,${file.buffer.toString('base64')}`;
       // Replace background-image: url() values with base64
       content = content.replace(new RegExp(`url\\(['"]?${file.fieldname}['"]?\\)`, 'g'), `url('${imageBase64}')`);
