@@ -26,7 +26,7 @@ function getRandomImage(images, cover=false) {
   );
 
   if (cover) {
-    console.log('cover page, selecting only high res images');
+    // console.log('cover page, selecting only high res images');
     filteredImages = filteredImages.filter(image => image.includes("highres"));
   }
 
@@ -36,12 +36,21 @@ function getRandomImage(images, cover=false) {
     randomIndex = Math.floor(Math.random() * filteredImages.length);
   }
 
-  return filteredImages[randomIndex];
+  let arraSliced = filteredImages.filter(element => element !== filteredImages[randomIndex]);
+  if (arraSliced.length == 0) { // if not enough images to filter, don't do it
+    arraSliced = filteredImages.slice() 
+  }
+  console.log(arraSliced);
+
+  return [filteredImages[randomIndex], arraSliced];
 }
 function replaceImagePlaceholder(str, imageFiles, cover=false) {
+  let a = null;
+  let b = imageFiles;
   return str.replace(/\{image\}/g, function () {
     // Select a random image from imageFiles
-    return getRandomImage(imageFiles);
+    [a,b] = getRandomImage(b, cover)
+    return a;
   });
 }
 
