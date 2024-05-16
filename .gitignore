@@ -1,9 +1,10 @@
 node_modules
 files
 PREVIEW
-output.html
-output.pdf
-pdf-preview-2.pdf
 pupeteer.js
 .env
 img
+pyppeteer.py
+pdfmate.py
+*.pdf
+*.html
